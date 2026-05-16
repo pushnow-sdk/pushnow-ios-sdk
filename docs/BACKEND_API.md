@@ -1,9 +1,9 @@
-# PushFly SDK ↔ Backend API — Deprecated
+# PushNow SDK ↔ Backend API — Deprecated
 
 This file was the first-draft spec the iOS SDK team wrote for the
 backend team. **The shipped backend surface supersedes it.**
 
-Read the authoritative doc in the `pushfly-backend` repo instead:
+Read the authoritative doc in the `pushnow-backend` repo instead:
 
 > `docs/SDK_BACKEND_INTEGRATION.md`
 
@@ -18,4 +18,4 @@ Three things changed between this draft and the shipped API:
    idempotent re-registers of the same APNs token.
 
 This SDK is implemented against the shipped surface. See
-`Sources/PushFly/` for the client-side of the contract.
+`Sources/PushNow/` for the client-side of the contract.

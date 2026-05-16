@@ -1,6 +1,6 @@
-# PushFly Demos
+# PushNow Demos
 
-Two reference integrations of the PushFly iOS SDK:
+Two reference integrations of the PushNow iOS SDK:
 
 | Folder        | Stack              | Best for                                    |
 |---------------|--------------------|---------------------------------------------|
@@ -8,11 +8,12 @@ Two reference integrations of the PushFly iOS SDK:
 | `SwiftUIDemo` | SwiftUI + App protocol | Modern SwiftUI apps, including @UIApplicationDelegateAdaptor |
 
 Both use the same SDK surface; the only real difference is where you
-instantiate `PushFly(UIApplication.shared)`.
+instantiate `PushNow(UIApplication.shared)`.
 
 ## Running a demo
 
-1. Open `PushFlyDemo.xcodeproj` from the demo folder in Xcode 15+.
+1. Open `UIKitDemo/PushNowDemo.xcodeproj` or
+   `SwiftUIDemo/PushNowDemo.xcodeproj` in Xcode 15+.
 2. Pick a real iOS device as the run destination — the simulator
    doesn't actually register with APNs, so `register` will time out.
 3. In **Signing & Capabilities**, pick your development team. The
@@ -20,18 +21,18 @@ instantiate `PushFly(UIApplication.shared)`.
    Remote notifications** enabled.
 4. Build and run.
 
-Each demo references the PushFly SDK as a **local Swift package**
+Each demo references the PushNow SDK as a **local Swift package**
 (relative path `../..` to the repo root). In a real integration
 you'd point at a remote URL instead.
 
 ## UIKit integration in one file
 
 This is the entire integration for a UIKit app, copied straight out of
-`UIKitDemo/PushFlyDemo/AppDelegate.swift`:
+`UIKitDemo/PushNowDemo/AppDelegate.swift`:
 
 ```swift
 import UIKit
-import PushFly
+import PushNow
 
 @main
 final class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -41,23 +42,23 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
         _ application: UIApplication,
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
     ) -> Bool {
-        let pushfly = PushFly(UIApplication.shared)
-        pushfly.toggleInAppBanner(true)
+        let pushnow = PushNow(UIApplication.shared)
+        pushnow.toggleInAppBanner(true)
 
-pushfly.onRegister { deviceToken, error in
-    if let error {
-        return print("Registration failed: \(error.localizedDescription)")
-    }
-    print("PushFly device token: \(deviceToken)")
-    UserDefaults.standard.set(deviceToken, forKey: "pushflyToken")
-}
+        pushnow.onRegister { deviceToken, error in
+            if let error {
+                return print("Registration failed: \(error.localizedDescription)")
+            }
+            print("PushNow device token: \(deviceToken)")
+            UserDefaults.standard.set(deviceToken, forKey: "pushnowToken")
+        }
 
-        pushfly.onNotificationReceived { data, ack in
+        pushnow.onNotificationReceived { data, ack in
             print("Received: \(data)")
             ack(.newData)
         }
 
-        pushfly.onNotificationOpened { data in
+        pushnow.onNotificationOpened { data in
             print("Tapped: \(data)")
         }
         return true
@@ -78,5 +79,5 @@ struct DemoApp: App {
 }
 ```
 
-See `SwiftUIDemo/PushFlyDemo/AppDelegate.swift` for the full
+See `SwiftUIDemo/PushNowDemo/AppDelegate.swift` for the full
 integration.

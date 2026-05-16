@@ -1,10 +1,10 @@
-# PushFly iOS SDK
+# PushNow iOS SDK
 
 The official iOS companion SDK for the
-[PushFly](https://pushfly.example.com) push notification service.
+[PushNow](https://pushnow.example.com) push notification service.
 The SDK handles APNs registration internally and hands you back a
 device token. **You** pass that token to your backend; your backend
-passes it to PushFly when it wants to send a notification.
+passes it to PushNow when it wants to send a notification.
 
 - iOS 13.0+
 - Swift 5.9 / Xcode 15
@@ -19,21 +19,21 @@ passes it to PushFly when it wants to send a notification.
 In Xcode → File → Add Packages…
 
 ```
-https://github.com/pushfly/pushfly-sdk-ios.git
+https://github.com/pushnow/pushnow-sdk-ios.git
 ```
 
 Or in `Package.swift`:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/pushfly/pushfly-sdk-ios.git", from: "0.1.0")
+    .package(url: "https://github.com/pushnow/pushnow-sdk-ios.git", from: "0.1.0")
 ]
 ```
 
 ### CocoaPods
 
 ```ruby
-pod 'PushFly', '~> 0.1'
+pod 'PushNow', '~> 0.1'
 ```
 
 ## Quick start
@@ -46,18 +46,18 @@ pod 'PushFly', '~> 0.1'
 ### 2. Register the device
 
 ```swift
-import PushFly
+import PushNow
 
 // Once, in AppDelegate.application(_:didFinishLaunchingWithOptions:)
 // (or the @UIApplicationDelegateAdaptor for SwiftUI apps).
-let pushfly = PushFly(UIApplication.shared)
+let pushnow = PushNow(UIApplication.shared)
 
-pushfly.onRegister { deviceToken, error in
+pushnow.onRegister { deviceToken, error in
     if let error {
         return print("Registration failed: \(error.localizedDescription)")
     }
     // Send this token to YOUR backend.
-    // Your backend then hands it to PushFly when sending pushes.
+    // Your backend then hands it to PushNow when sending pushes.
     myApi.saveDeviceToken(deviceToken)
 }
 ```
@@ -65,54 +65,55 @@ pushfly.onRegister { deviceToken, error in
 Or with Swift Concurrency:
 
 ```swift
-let token = try await pushfly.onRegister()
+let token = try await pushnow.onRegister()
 ```
 
-That's the whole SDK surface you need for registration. PushFly
+That's the whole SDK surface you need for registration. PushNow
 swizzles the two APNs callbacks on your `UIApplicationDelegate`
 under the hood — you don't wire up anything yourself.
 
 ### 3. Handle incoming notifications
 
 ```swift
-pushfly.onNotificationReceived { data, ack in
+pushnow.onNotificationReceived { data, ack in
     print("received:", data)
     ack(.newData)
 }
 
-pushfly.onNotificationOpened { data in
+pushnow.onNotificationOpened { data in
     print("tapped:", data)
 }
 
 // Optional: show banners for notifications received in the foreground.
-pushfly.toggleInAppBanner(true)
+pushnow.toggleInAppBanner(true)
 ```
 
-PushFly installs itself as the `UNUserNotificationCenter` delegate
+PushNow installs itself as the `UNUserNotificationCenter` delegate
 and chains to any existing delegate you already had, so this
 works alongside other SDKs that hook into notifications.
 
 ## How the device token flows
 
 ```
- iOS device                                 Your backend                 PushFly
+ iOS device                                 Your backend                 PushNow
  ─────────                                  ────────────                 ───────
- PushFly.onRegister { token in
+ PushNow.onRegister { token in
      POST /users/me/push-token  ────────►   store(token)
  }
                                             POST /v1/notifications  ───►  deliver
                                             { target: { deviceToken }}
 ```
 
-The SDK never talks to PushFly directly. Credentials stay on your
-backend.
+The SDK registers the device with PushNow’s HTTP API (identified by
+your app’s bundle ID). Your backend keeps the secrets used to send
+notifications; it passes the short device token when targeting a device.
 
 ## Objective-C
 
 ```objc
-PushFly *pushfly = [[PushFly alloc] init:UIApplication.sharedApplication];
+PushNow *pushnow = [[PushNow alloc] init:UIApplication.sharedApplication];
 
-[pushfly onRegister:^(NSString *deviceToken, NSError *err) {
+[pushnow onRegister:^(NSString *deviceToken, NSError *err) {
     if (err) { NSLog(@"register failed: %@", err); return; }
     NSLog(@"token: %@", deviceToken);
 }];
@@ -120,7 +121,7 @@ PushFly *pushfly = [[PushFly alloc] init:UIApplication.sharedApplication];
 
 ## Error handling
 
-Errors come back as `PushFlyError` with a stable `code`:
+Errors come back as `PushNowError` with a stable `code`:
 
 | code                       | when                                                        |
 |----------------------------|-------------------------------------------------------------|
@@ -132,11 +133,13 @@ Errors come back as `PushFlyError` with a stable `code`:
 
 ## What gets stored on device
 
-One string, in the keychain:
+Three values, keychain-backed (mirrored to `UserDefaults` for reads):
 
-| Key                    | Contents                                        |
-|------------------------|-------------------------------------------------|
-| `_pushflyDeviceToken`  | Hex APNs device token from the last register   |
+| Key                   | Contents                                              |
+|-----------------------|-------------------------------------------------------|
+| `_pushnowApnsToken`   | Hex APNs token from Apple                             |
+| `_pushnowDeviceToken` | Short device ID returned by PushNow after register   |
+| `_pushnowAuth`        | Per-device secret for refresh / validate / unregister |
 
 ## Demo app
 
